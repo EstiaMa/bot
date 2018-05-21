@@ -1,0 +1,63 @@
+from __future__ import print_function
+
+from urllib.parse import urlparse, urlencode
+from urllib.request import urlopen, Request
+from urllib.error import HTTPError
+
+from tmdbv3api import TMDb 
+from tmdbv3api import Movie
+from tmdbv3api import Person
+
+import requests
+import json
+import os
+
+tmdb = TMDb()
+tmdb.api_key = 'eb81f22e85389288369e61f7d0d0c7d5'
+
+def process(req):
+    baseurl = "https://api.themoviedb.org/3/search/person?"
+    query = makeQuery(req)
+    url = baseurl + urlencode({'query': query}) + "&api_key="+tmdb.api_key+"&append_to_response=credits"
+    result = urlopen(url).read()
+    data = json.loads(result.decode('utf-8'))
+    result = data['results'][0]
+    id = result['id']
+	
+    response = requests.get('https://api.themoviedb.org/3/person/'+str(id)+'?api_key='+tmdb.api_key+'&append_to_response=credits')
+    resp = response.json()
+    print(resp)
+    res = makeWebhookResult(resp)
+    return res
+	
+def makeQuery(req):
+    result = req.get("result")
+    parameters = req['queryResult']['parameters']
+    actor = parameters.get("actor")
+
+    if actor is None:
+        return None
+    return actor
+
+
+def makeWebhookResult(data):
+    print ("starting makeWebhookResult...")
+	
+    res = data['credits']['cast']
+    text = []
+    text.append("Here is the filmography: ")
+    for movie in res:
+        title = movie['title']
+        character = movie['character']
+        text.append(title+ " - " +character)
+    
+    speech = '\n 	'.join(text)
+    
+
+    print("Response:")
+    print(speech)
+
+    return {
+        "fulfillmentText": speech,
+        "source": "apiai-movie-webhook-sample"
+    }
