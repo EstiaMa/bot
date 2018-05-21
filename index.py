@@ -26,7 +26,7 @@ app = Flask(__name__)
 tmdb = TMDb()
 tmdb.api_key = 'eb81f22e85389288369e61f7d0d0c7d5'
 
-@app.route('/webhook', methods=['POST'])
+@app.route('/', methods=['POST'])
 def webhook():
     req = request.get_json(silent=True, force=True)
 
